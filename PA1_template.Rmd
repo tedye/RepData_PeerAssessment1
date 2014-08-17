@@ -2,19 +2,94 @@
 
 
 ## Loading and preprocessing the data
-
+```{r}
+data0 <- read.csv("activity.csv",
+                  colClasses = c("numeric", "character", "numeric"))
+data1 <- data0[complete.cases(data0),]
+```
 
 
 ## What is mean total number of steps taken per day?
-
-
-
+Histogram of the total number of steps taken each day:
+```{r}
+result1 <- lapply(split(data1,data1$date),function(d){sum(d$step)}) 
+result1 <- unlist(result1)
+hist(result1, main = "Histogram of the total number of steps taken each day")
+rug(result1)
+```
+Mean:
+```{r}
+mean(result1)
+```
+Median:
+```{r}
+median(result1)
+```
+  
 ## What is the average daily activity pattern?
+```{r}
+ts_data <- tapply(data1$steps, data1$interval, mean)
+plot(row.names(ts_data), 
+     ts_data, 
+     type = "l",
+     xlab = "5-min interval", 
+     ylab = "Average across all Days", 
+     main = "Average number of steps taken", 
+     col = "blue")
 
-
-
+```
+  
+The interval that contains the max. number of steps:
+```{r}
+names(which.max(ts_data))
+```
+  
 ## Imputing missing values
 
+1.Total number of missing values on the dataset(i.e. total number of the rows with NAs)
+```{r}
+nrow(data0) - nrow(data1)
+```
+  
+Fill in the missing values with the mean of that 5-min interval
+```{r}
+StepsAverage <- aggregate(steps ~ interval, data = data0, FUN = mean)
+fillNA <- numeric()
+for (i in 1:nrow(data0)) {
+    obs <- data0[i, ]
+    if (is.na(obs$steps)) {
+        steps <- subset(StepsAverage, interval == obs$interval)$steps
+    } else {
+        steps <- obs$steps
+    }
+    fillNA <- c(fillNA, steps)
+}
+```
+  
+New dataset:
+```{r}
+data_new <- data0
+data_new$steps <- fillNA
+```
 
+Histogram of the new dataset:
+```{r}
+histdata <- data_new[complete.cases(data_new),]
+result2 <- lapply(split(data_new,data_new$date),function(d){sum(d$step)}) 
+result2 <- unlist(result2)
+hist(result2, main = "Histogram of the total number of steps taken each day")
+rug(result2)
+```
+  
+Mean:
+```{r}
+mean(result2)
+```
+Median:
+```{r}
+median(result2)
+```
+  
+Result: the median is different by 1.
 
 ## Are there differences in activity patterns between weekdays and weekends?
